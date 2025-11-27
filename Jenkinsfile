@@ -1,4 +1,4 @@
-pipeline {
+pipeline { 
     agent any
 
     environment {
@@ -118,7 +118,7 @@ pipeline {
                         passwordVariable: 'DOCKERHUB_PASSWORD')]) {
 
                         sh """
-                            docker network create devsecops-net || true
+                            docker network inspect devsecops-net || docker network create devsecops-net
                             docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} .
                             docker tag ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} \$DOCKERHUB_USERNAME/${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
                             echo \$DOCKERHUB_PASSWORD | docker login -u \$DOCKERHUB_USERNAME --password-stdin
@@ -144,7 +144,7 @@ pipeline {
                 script {
                     echo "Checking if app is responding on ${APP_URL} ..."
                     sh '''
-                        MAX_RETRIES=80
+                        MAX_RETRIES=20
                         for i in $(seq 1 $MAX_RETRIES); do
                             code=$(curl -s -o /dev/null -w "%{http_code}" ${APP_URL} || true)
                             if [ "$code" = "200" ]; then
