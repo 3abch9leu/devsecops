@@ -132,8 +132,8 @@ pipeline {
         stage('Deploy App for Testing') {
             steps {
                 sh """
-                    docker rm -f devsecops-app || true
-                    docker run -d --name devsecops-app \
+                    docker rm -f calculator-app || true
+                    docker run -d --name calculator-app \
                         --network devsecops-net -p 8040:8040 ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
                 """
             }
@@ -152,11 +152,11 @@ pipeline {
                                 exit 0
                             fi
                             echo "App NOT ready yet... retry $i/$MAX_RETRIES (HTTP code: $code)"
-                            docker logs devsecops-app --tail 10 || true
+                            docker logs calculator-app --tail 10 || true
                             sleep 4
                         done
                         echo "App did NOT become ready in time."
-                        docker logs devsecops-app || true
+                        docker logs calculator-app || true
                         exit 1
                     '''
                 }
@@ -191,8 +191,8 @@ pipeline {
     post {
         always {
             sh '''
-                docker stop devsecops-app || true
-                docker rm devsecops-app || true
+                docker stop calculator-app || true
+                docker rm calculator-app || true
             '''
             cleanWs()
         }
