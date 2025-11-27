@@ -3,15 +3,15 @@ pipeline {
 
     environment {
         SONAR_HOST = "http://localhost:9000"
-        SLACK_CHANNEL = '#all-devsecops-team'
-        SLACK_CREDENTIALS = 'slack'
-        GIT_URL = "https://github.com/takwa-laffet/calculatrice.git"
+/*         SLACK_CHANNEL = '#all-devsecops-team'
+        SLACK_CREDENTIALS = 'slack' */
+        GIT_URL = "https://github.com/3abch9leu/devsecops"
         GIT_BRANCH = "main"
-        SONAR_PROJECT_KEY = "Calculatrice"
+        SONAR_PROJECT_KEY = "devsecops"
         SNYK_BINARY = "/usr/local/bin/snyk"
         APP_URL = "http://localhost:8040"
         PROMETHEUS_PUSHGATEWAY = "http://localhost:9091"
-        DOCKER_IMAGE_NAME = "calculator-app"
+        DOCKER_IMAGE_NAME = "devsecops-app"
     }
 
     tools {
@@ -215,7 +215,7 @@ EOF
 
     } // end stages
 
-    post {
+/*     post {
         success {
             script {
                 def gitleaksSummary = fileExists('gitleaks-report.json') ? sh(script: "jq -r '. | length' gitleaks-report.json || echo 0", returnStdout: true).trim() : "0"
@@ -243,7 +243,7 @@ EOF
                 tokenCredentialId: env.SLACK_CREDENTIALS
             )
         }
-
+ */
         always {
             sh '''
                 docker stop calculator-app || true
