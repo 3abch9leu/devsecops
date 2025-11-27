@@ -3,14 +3,11 @@ pipeline {
 
     environment {
         SONAR_HOST = "http://localhost:9000"
-/*         SLACK_CHANNEL = '#all-devsecops-team'
-        SLACK_CREDENTIALS = 'slack' */
         GIT_URL = "https://github.com/3abch9leu/devsecops"
         GIT_BRANCH = "main"
         SONAR_PROJECT_KEY = "devsecops"
         SNYK_BINARY = "/usr/local/bin/snyk"
         APP_URL = "http://localhost:8040"
-        PROMETHEUS_PUSHGATEWAY = "http://localhost:9091"
         DOCKER_IMAGE_NAME = "devsecops-app"
     }
 
@@ -189,61 +186,9 @@ pipeline {
             }
         }
 
-        stage('Push Metrics to Prometheus') {
-            steps {
-                script {
-                    def safeJobName = env.JOB_NAME.replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase()
-
-                    def gitleaksCount = sh(script: "jq -r '. | length' gitleaks-report.json || echo 0", returnStdout: true).trim()
-                    def snykCount = sh(script: "jq -r '.vulnerabilities | length' snyk-report.json || echo 0", returnStdout: true).trim()
-                    def trivyCount = sh(script: "grep -c 'CRITICAL\\|HIGH' trivy-report.html || echo 0", returnStdout: true).trim()
-                    def zapCount = sh(script: "grep -c -i 'High\\|Medium\\|Low' zap-report.html || echo 0", returnStdout: true).trim()
-                    def niktoCount = sh(script: "grep -c 'OSVDB' nikto-report.html || echo 0", returnStdout: true).trim()
-
-                    sh """
-                    cat <<EOF | curl --data-binary @- ${PROMETHEUS_PUSHGATEWAY}/metrics/job/${safeJobName}/build/${BUILD_NUMBER}
-jenkins_gitleaks_issues{job="${safeJobName}"} ${gitleaksCount}
-jenkins_snyk_vulnerabilities{job="${safeJobName}"} ${snykCount}
-jenkins_trivy_alerts{job="${safeJobName}"} ${trivyCount}
-jenkins_zap_alerts{job="${safeJobName}"} ${zapCount}
-jenkins_nikto_alerts{job="${safeJobName}"} ${niktoCount}
-EOF
-                    """
-                }
-            }
-        }
-
     } // end stages
 
-/*     post {
-        success {
-            script {
-                def gitleaksSummary = fileExists('gitleaks-report.json') ? sh(script: "jq -r '. | length' gitleaks-report.json || echo 0", returnStdout: true).trim() : "0"
-                def snykSummary = fileExists('snyk-report.json') ? sh(script: "jq -r '.vulnerabilities | length' snyk-report.json || echo 0", returnStdout: true).trim() : "0"
-                def trivySummary = fileExists('trivy-report.html') ? sh(script: "grep -c 'CRITICAL\\|HIGH' trivy-report.html || echo 0", returnStdout: true).trim() : "0"
-                def niktoSummary = fileExists('nikto-report.html') ? sh(script: "grep -c 'OSVDB' nikto-report.html || echo 0", returnStdout: true).trim() : "0"
-
-                slackSend(
-                    channel: env.SLACK_CHANNEL,
-                    message: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}\n" +
-                             "• Gitleaks Issues: ${gitleaksSummary}\n" +
-                             "• Snyk Vulnerabilities: ${snykSummary}\n" +
-                             "• Trivy Alerts: ${trivySummary}\n" +
-                             "• Nikto Alerts: ${niktoSummary}\n" +
-                             "• Build & Deploy Successful\nLogs: ${BUILD_URL}",
-                    tokenCredentialId: env.SLACK_CREDENTIALS
-                )
-            }
-        }
-
-        failure {
-            slackSend(
-                channel: env.SLACK_CHANNEL,
-                message: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nCheck pipeline logs: ${BUILD_URL}",
-                tokenCredentialId: env.SLACK_CREDENTIALS
-            )
-        }
- */
+    post {
         always {
             sh '''
                 docker stop calculator-app || true
